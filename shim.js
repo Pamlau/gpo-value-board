@@ -161,11 +161,27 @@
   window.process = window.process || { env: {}, platform: 'web' };
   window.Buffer = window.Buffer || { from: () => ({ toString: () => '' }), concat: () => ({}) };
 
+  /* ---- a visitor's own view: what they change in the board's ⚙ stays on THEIR device (this browser's storage) as
+     the differences from the owner's published look. The owner's board and other visitors never see it; what the
+     owner enforces (which tabs are shown, the phone layout) always wins. */
+  const CONFIG = 'Resources/utility-config.json';
+  const VIEW_KEY = 'gpo-board-my-view';
+  let baseCfg = {}, forced = {};
+  function myView() { try { return JSON.parse(localStorage.getItem(VIEW_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function keepView(text) {
+    try {
+      const now = (JSON.parse(text) || {}).gpoBoard || {};
+      const diff = {};
+      Object.keys(now).forEach((k) => { if (!(k in forced) && JSON.stringify(now[k]) !== JSON.stringify(baseCfg[k])) diff[k] = now[k]; });
+      localStorage.setItem(VIEW_KEY, JSON.stringify(diff));
+    } catch (e) { /* private window or full storage: the view just is not kept */ }
+  }
+
   /* ---- the vault: the bundle's files; writes stay in this page */
   const adapter = {
     read: (p) => (files.has(p) ? Promise.resolve(files.get(p)) : Promise.reject(new Error('ENOENT ' + p))),
     exists: (p) => Promise.resolve(files.has(p) || Array.from(files.keys()).some((k) => k.startsWith(p + '/'))),
-    write: (p, text) => { files.set(p, String(text)); return Promise.resolve(); },
+    write: (p, text) => { files.set(p, String(text)); if (p === CONFIG) keepView(String(text)); return Promise.resolve(); },
     append: (p, text) => { files.set(p, (files.get(p) || '') + text); return Promise.resolve(); },
     list: (dir) => Promise.resolve({ files: Array.from(files.keys()).filter((k) => k.startsWith(dir + '/')), folders: [] }),
     mkdir: () => Promise.resolve(), remove: (p) => { files.delete(p); return Promise.resolve(); }, rmdir: () => Promise.resolve(),
@@ -189,15 +205,16 @@
   /* ---- start: put the bundle's files in, run the board's script, draw it into `host` */
   window.GpoWeb = {
     files,
+    hasMyView: () => Object.keys(myView()).length > 0,
+    resetMyView: () => { try { localStorage.removeItem(VIEW_KEY); } catch (e) { /* nothing kept */ } },
     async start(bundle, host, opts) {
       files.clear();
       Object.keys(bundle.files || {}).forEach((k) => files.set(k, bundle.files[k]));
-      if (opts && opts.patchConfig) {
-        const p = 'Resources/utility-config.json';
-        const cfg = JSON.parse(files.get(p) || '{}');
-        cfg.gpoBoard = Object.assign(cfg.gpoBoard || {}, opts.patchConfig);
-        files.set(p, JSON.stringify(cfg));
-      }
+      const cfg = JSON.parse(files.get(CONFIG) || '{}');
+      baseCfg = Object.assign({}, cfg.gpoBoard || {});
+      forced = Object.assign({}, (opts && opts.patchConfig) || {});
+      cfg.gpoBoard = Object.assign({}, baseCfg, myView(), forced);
+      files.set(CONFIG, JSON.stringify(cfg));
       if (!window.GpoBoard || window.__gpoScript !== bundle.digest) {
         const Board = new Function(bundle.script + '\n;return GpoBoard;')();
         window.GpoBoard = Board;
