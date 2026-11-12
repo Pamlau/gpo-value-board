@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" class="theme-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>GPO Value Board</title>
+<style>
+:root, body { --background-primary:#0b1020; --background-secondary:#0e1628; --background-secondary-alt:#111c33; --background-modifier-border:#1e2a44; --background-modifier-hover:rgba(120,150,255,.08);
+  --background-modifier-form-field:#0b1220; --background-modifier-error:#ef4444; --background-modifier-success:#22c55e; --text-normal:#e6edff; --text-muted:#8fa0c4; --text-faint:#5f7098; --text-accent:#58a6ff;
+  --text-on-accent:#fff; --text-error:#fca5a5; --interactive-accent:#2f81f7; --interactive-accent-hover:#4c94ff; --interactive-normal:#111c33; --interactive-hover:#17254a; --font-interface:"Segoe UI", system-ui, sans-serif;
+  --font-text:"Segoe UI", system-ui, sans-serif; --font-monospace:Consolas, monospace; --font-ui-small:13px; --font-ui-smaller:12px; --font-ui-medium:15px; --radius-s:4px; --radius-m:8px; --radius-l:12px;
+  --color-accent:#2f81f7; --color-red:#ef4444; --color-green:#22c55e; --color-yellow:#f59e0b; --color-orange:#fb923c; --color-blue:#58a6ff; --color-purple:#a78bfa; --color-base-00:#0b1020; --color-base-10:#0e1628;
+  --color-base-20:#111c33; --color-base-25:#17254a; --color-base-30:#1e2a44; --color-base-40:#33466f; --color-base-70:#8fa0c4; --color-base-100:#e6edff; --shadow-s:0 2px 8px rgba(0,0,0,.4); --shadow-l:0 8px 30px rgba(0,0,0,.55);
+  --size-4-1:4px; --size-4-2:8px; --size-4-3:12px; --size-4-4:16px; --input-height:30px; --line-height-normal:1.5; --divider-color:#1e2a44; --modal-background:#0e1628; --modal-border-color:#1e2a44; --icon-color:#8fa0c4; }
+* { box-sizing: border-box; }
+html, body { height:100%; margin:0; }
+body { background:var(--background-primary); color:var(--text-normal); font:14px/1.5 var(--font-interface); }
+button, input, select, textarea { font:inherit; color:inherit; }
+button { background:var(--interactive-normal); border:1px solid var(--background-modifier-border); border-radius:6px; padding:4px 10px; cursor:pointer; }
+button:hover { background:var(--interactive-hover); }
+input[type=text], input[type=search], input[type=number], select, textarea { background:var(--background-modifier-form-field); border:1px solid var(--background-modifier-border); border-radius:6px; padding:4px 8px; }
+a { color:var(--text-accent); }
+#bar { display:flex; align-items:center; gap:10px; padding:6px 14px; border-bottom:1px solid var(--background-modifier-border); background:var(--background-secondary); font-size:12.5px; color:var(--text-muted); }
+#bar b { color:var(--text-normal); font-size:14px; } #bar .grow { flex:1; } #bar .dot { width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; margin-right:5px; }
+#host { padding:10px 14px 40px; }
+#gate { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--background-primary); z-index:50; }
+#gate .card { width:min(420px, 92vw); background:var(--background-secondary); border:1px solid var(--background-modifier-border); border-radius:14px; padding:24px; text-align:center; }
+#gate h1 { font-size:20px; margin:0 0 6px; } #gate p { color:var(--text-muted); margin:6px 0 14px; }
+#gate input { width:100%; padding:10px 12px; font:600 16px Consolas, monospace; letter-spacing:.08em; text-align:center; text-transform:uppercase; }
+#gate button { width:100%; margin-top:10px; padding:10px; background:var(--interactive-accent); border-color:var(--interactive-accent); color:#fff; font-weight:600; }
+#gate .err { color:var(--text-error); min-height:20px; margin-top:10px; font-size:13px; }
+#web-notices { position:fixed; right:14px; top:14px; display:grid; gap:8px; z-index:90; }
+.notice { background:#17254a; border:1px solid var(--background-modifier-border); border-radius:8px; padding:8px 12px; max-width:360px; box-shadow:var(--shadow-l); white-space:pre-wrap; }
+.menu { position:fixed; z-index:95; background:var(--background-secondary); border:1px solid var(--background-modifier-border); border-radius:8px; padding:4px; box-shadow:var(--shadow-l); min-width:170px; max-height:80vh; overflow:auto; }
+.menu-item { display:flex; gap:8px; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:13px; } .menu-item:hover { background:var(--background-modifier-hover); }
+.menu-item.is-disabled, .menu-item.is-label { opacity:.55; cursor:default; } .menu-item-icon { width:14px; } .menu.no-icon .menu-item-icon { display:none; }
+.menu-separator { height:1px; background:var(--background-modifier-border); margin:4px 0; }
+.modal-container { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; } .modal-bg { position:absolute; inset:0; background:rgba(0,0,0,.6); }
+.modal { position:relative; background:var(--modal-background); border:1px solid var(--modal-border-color); border-radius:12px; padding:18px; max-width:min(900px, 94vw); max-height:88vh; overflow:auto; }
+.modal-close-button { position:absolute; right:10px; top:8px; cursor:pointer; color:var(--text-muted); }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div id="gate"><div class="card">
+  <h1>GPO Value Board</h1>
+  <p id="gate-text">Enter the key you were given.</p>
+  <input id="key" type="text" placeholder="GPO-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="24">
+  <button id="go">Open the board</button>
+  <div class="err" id="gate-err"></div>
+</div></div>
+<div id="bar" hidden><b>GPO Value Board</b><span id="bar-ver"></span><span class="grow"></span><span id="bar-key"></span><span><span class="dot"></span>live</span><button id="leave" title="Forget the key on this device">Sign out</button></div>
+<div id="host"></div>
+<script src="shim.js"></script>
+<script>
+(function () {
+  'use strict';
+  const SERVICE = 'https://gpo-value-board.pamlau.workers.dev';
+  const DEV = /[?&]dev=1/.test(location.search) && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const $ = (id) => document.getElementById(id);
+  const WORDS = { unknown: 'That key is not known. Check it and try again.', revoked: 'This key was switched off by the owner.', expired: 'This key has expired. Ask the owner for a new one.',
+    closed: 'The board is closed right now.', owner_away: 'The board is only open while the owner is online. Try again later.', in_use: 'This key is in use on another device.',
+    kicked: 'The owner ended this session.', session: 'Your session ended. Enter the key again.', network: 'Could not reach the board. Check your connection.' };
+  let session = '', timer = 0, version = '', tabs = [], bundle = null, label = '';
+  const saved = { get key() { try { return localStorage.getItem('gpo-board-key') || ''; } catch (e) { return ''; } }, set key(v) { try { if (v) localStorage.setItem('gpo-board-key', v); else localStorage.removeItem('gpo-board-key'); } catch (e) { /* private window */ } } };
+  async function api(path, body) {
+    const r = await fetch(SERVICE + path, { method: body ? 'POST' : 'GET', headers: Object.assign({ 'Content-Type': 'application/json' }, session ? { Authorization: 'Bearer ' + session } : {}), body: body ? JSON.stringify(body) : undefined });
+    return path === '/api/bundle' && r.ok ? r.json() : r.json().catch(() => ({ ok: false, reason: 'network' }));
+  }
+  function lock(reason, message) {
+    clearInterval(timer);
+    session = '';
+    $('host').replaceChildren();
+    $('bar').hidden = true;
+    $('gate').hidden = false;
+    $('gate-err').textContent = (WORDS[reason] || 'The board is not available right now.') + (message ? ' "' + message + '"' : '');
+    if (['unknown', 'revoked', 'expired'].includes(reason)) saved.key = '';
+  }
+  /* what friends may see: the owner's tab list decides (Board Manager › Friends see) */
+  function patchFor(list) {
+    const allow = new Set(['values'].concat(list.includes('merchant') ? ['stock'] : [], list.includes('servers') ? ['servers'] : [], list.includes('updates') ? ['updates'] : [], list.includes('timers') ? ['timers'] : [],
+      list.includes('offers') ? ['messages'] : [], list.includes('sign') ? ['macro'] : []));
+    const tabHide = {};
+    ['messages', 'macro', 'timers', 'stock', 'servers', 'updates', 'popout'].forEach((t) => { if (!allow.has(t)) tabHide[t] = true; });
+    return { tab: 'values', tabHide, calcOn: list.includes('trade'), drawerOpen: false, updatesDot: false, seenVersion: '9999' };
+  }
+  async function draw() {
+    const css = $('web-rules') || document.head.appendChild(Object.assign(document.createElement('style'), { id: 'web-rules' }));
+    css.textContent = '.gpo-board .gpo-open-list { display:none !important; }' + (tabs.includes('trade') ? '' : ' .gpo-board .gpo-calc, .gpo-board .gpo-tradebox { display:none !important; }');
+    await window.GpoWeb.start(bundle, $('host'), { patchConfig: patchFor(tabs) });
+    $('bar-ver').textContent = 'values from ' + String(bundle.version || '').slice(0, 16);
+  }
+  async function enter(key) {
+    $('gate-err').textContent = '';
+    $('go').disabled = true;
+    try {
+      const un = DEV ? { ok: true, session: 'dev', tabs: ['values', 'merchant', 'trade'], label: 'dev', version: 'dev' } : await api('/api/unlock', { key });
+      if (!un.ok) { lock(un.reason, un.message); return; }
+      session = un.session; tabs = un.tabs || []; version = un.version; label = un.label || '';
+      saved.key = key;
+      bundle = DEV ? await (await fetch('dev-bundle.json', { cache: 'no-store' })).json() : await api('/api/bundle');
+      if (!bundle || !bundle.script) { lock(bundle && bundle.reason ? bundle.reason : 'closed', DEV ? '' : 'The owner has not published the board yet.'); return; }
+      $('gate').hidden = true;
+      $('bar').hidden = false;
+      $('bar-key').textContent = label ? 'key: ' + label : '';
+      await draw();
+      if (!DEV) timer = setInterval(ping, (un.ping || 20) * 1000);
+    } catch (e) {
+      console.error(e);
+      lock('network');
+      $('gate-err').textContent = 'Something went wrong while opening the board: ' + (e && e.message ? e.message : e);
+    } finally { $('go').disabled = false; }
+  }
+  async function ping() {
+    let r;
+    try { r = await api('/api/ping', {}); } catch (e) { return; } /* a network blip: try again at the next ping */
+    if (!r.ok) { if (r.reason && r.reason !== 'network') lock(r.reason, r.message); return; }
+    const sameTabs = JSON.stringify(r.tabs || []) === JSON.stringify(tabs);
+    if (r.version !== version || !sameTabs) { /* the owner changed values or what friends see: follow without a refresh */
+      location.reload(); /* the saved key opens it again with the new values / tabs */
+    }
+  }
+  $('go').onclick = () => { const k = $('key').value.trim(); if (k) enter(k); else $('gate-err').textContent = 'Enter a key first.'; };
+  $('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('go').click(); });
+  $('leave').onclick = () => { saved.key = ''; lock('session'); $('gate-err').textContent = ''; $('key').value = ''; };
+  const fromLink = (/[#&]k=([A-Za-z0-9-]+)/.exec(location.hash) || [])[1];
+  if (fromLink) { history.replaceState(null, '', location.pathname + location.search); $('key').value = fromLink; enter(fromLink); }
+  else if (DEV) enter('dev');
+  else if (saved.key) { $('key').value = saved.key; enter(saved.key); }
+}());
+</script>
+</body>
+</html>
