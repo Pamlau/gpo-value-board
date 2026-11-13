@@ -102,6 +102,7 @@ html.web-phone .modal { max-width:96vw; padding:12px; }
       list.includes('offers') ? ['messages'] : [], list.includes('sign') ? ['macro'] : []));
     const tabHide = {};
     ['messages', 'macro', 'timers', 'stock', 'servers', 'updates', 'popout'].forEach((t) => { if (!allow.has(t)) tabHide[t] = true; });
+    if (!(DEV && /[?&]vaults=1/.test(location.search))) tabHide.vaults = true; /* your accounts' storage: never on the web */
     const p = { tab: 'values', tabHide, calcOn: list.includes('trade'), drawerOpen: false, updatesDot: false, seenVersion: '9999' };
     if (isPhone()) Object.assign(p, { valCols: { rarity: false, merchant: false, chance: false, profit: false, peli: false, baits: false }, valColsBy: {}, columnScroll: false, fontSize: 15, rowPad: 6, colMin: 200, extraPlacement: 'column' });
     return p;
