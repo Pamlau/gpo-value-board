@@ -202,6 +202,33 @@
   };
   window.customJS = window.customJS || {};
 
+  /* ---- keys, like in Obsidian: the board registers Space, / and Ctrl+F on the view's "scope", and listens for T,
+     1-9, ? and Esc on itself. On the web nothing is focused at first, so keys typed anywhere on the page are handed
+     to the newest pushed scope, then the view's scope, then the board itself. */
+  const stack = [];
+  window.app.keymap.pushScope = (s) => { stack.push(s); };
+  window.app.keymap.popScope = (s) => { const i = stack.lastIndexOf(s); if (i >= 0) stack.splice(i, 1); };
+  window.app.workspace.iterateAllLeaves = (fn) => { try { fn(leaf); } catch (e) { /* the board guards its own loops */ } };
+  leaf.rebuildView = () => { if (window.GpoWeb && window.GpoWeb.redraw) window.GpoWeb.redraw(); };
+  function runScope(scope, e, info) {
+    for (const k of (scope && scope.keys) || []) {
+      const hit = (k.modifiers === null || k.modifiers === info.modifiers) && (!k.key || k.key === info.vkey || (!!info.key && String(k.key).toLowerCase() === info.key.toLowerCase()));
+      if (!hit) continue;
+      const r = k.func(e, info);
+      if (r === false) { e.preventDefault(); e.stopPropagation(); return true; }
+      if (r !== undefined) return true;
+    }
+    return false;
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.__gpoWeb || !document.querySelector('.gpo-board') || (document.getElementById('gate') && !document.getElementById('gate').hidden)) return;
+    const info = { modifiers: [(e.ctrlKey || e.metaKey) && 'Mod', e.altKey && 'Alt', e.shiftKey && 'Shift'].filter(Boolean).join(','), key: e.key, vkey: e.key };
+    if (stack.length && runScope(stack[stack.length - 1], e, info)) return;
+    runScope(leaf.view.scope, e, info);
+    /* T, 1-9, ? and Esc: the board listens on the page itself and only asks that its pane is the active one
+       (the host element carries Obsidian's "workspace-leaf mod-active" classes for that) */
+  });
+
   /* ---- start: put the bundle's files in, run the board's script, draw it into `host` */
   window.GpoWeb = {
     files,
@@ -221,7 +248,14 @@
         window.__gpoScript = bundle.digest;
         await new Board().invoke();
       }
+      this.host = host;
+      return this.redraw();
+    },
+    async redraw() {
+      const host = this.host;
+      if (!host) return null;
       host.empty();
+      host.addClass('workspace-leaf', 'mod-active');
       const el = host.createDiv({ cls: 'block-language-gpo-board' });
       await window._gpoBoardRender('', el, { sourcePath: 'Gaming/GPO Value Board.md', addChild: (c) => { try { c.load(); } catch (e) { /* drawn anyway */ } }, getSectionInfo: () => null });
       return el;
